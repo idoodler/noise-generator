@@ -1,6 +1,4 @@
-name: Build
-
-# Controls when the workflow will run
+name: 🚀 Deploy image on push/pull request
 on:
   push:
     branches:
@@ -10,13 +8,9 @@ on:
   pull_request:
     branches:
       - 'main'
-
-# permissions are needed if pushing to ghcr.io
-permissions: 
-  packages: write
-
 jobs:
   build:
+    name: 🏗️ Building noise-generator
     runs-on: ubuntu-latest
     steps:
       # Get the repository's code
