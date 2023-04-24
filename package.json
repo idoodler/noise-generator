@@ -1,0 +1,25 @@
+{
+  "name": "noisegenerator",
+  "version": "1.0.0",
+  "description": "Generates an image with randomized colors",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "test": "node .",
+    "📦 & ⬆️": "docker image build -t noise-generator . && docker tag noise-generator docker.idoodler.dev/noise-generator && docker push docker.idoodler.dev/noise-generator"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idoodler/noiseGenerator.git"
+  },
+  "author": "idoodler (David Gölzhäuser)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/idoodler/noiseGenerator/issues"
+  },
+  "homepage": "https://github.com/idoodler/noiseGenerator#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "js-image-generator": "^1.0.4"
+  }
+}
