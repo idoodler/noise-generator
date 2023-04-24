@@ -16,9 +16,6 @@ jobs:
       # Get the repository's code
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Read package.json
-        uses: dutscher/read-package-json-endpoint-actions@v1.33.7
-        id: package-json
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -41,15 +38,7 @@ jobs:
           images: |
             ghcr.io/idoodler/noise-generator
           tags: |
-            type=schedule
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
-            type=raw,value=${{ steps.package-json.outputs.version }},enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
-            type=sha
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
