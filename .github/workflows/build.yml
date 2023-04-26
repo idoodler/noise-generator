@@ -10,7 +10,7 @@ on:
       - 'main'
 jobs:
   build:
-    name: 🏗️ Building noise-generator
+    name: 🏗️ Building ${{ github.repository }}
     runs-on: ubuntu-latest
     steps:
       # Get the repository's code
@@ -36,7 +36,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            ghcr.io/idoodler/noise-generator
+            ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
       - name: Build and push
