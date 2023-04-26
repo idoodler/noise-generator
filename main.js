@@ -8,11 +8,10 @@ app.get('/', (req, res, next) => {
     const {
         height = 120,
         width = 120,
-        customTxt,
         cors = false
     } = req.query
 
-    generateImage(width, height, 80, (e, img) => {
+    generateImage(Math.max(0, Math.min(width, 1024)), Math.max(Math.min(height, 2048)), 80, (e, img) => {
         if (e) {
             next(e);
         } else {
@@ -23,9 +22,7 @@ app.get('/', (req, res, next) => {
     })
 })
 
-app.get('/health', (req, res, next) => {
-    res.end("ok");
-})
+app.get('/health', (req, res, next) => res.end("ok"));
 
 app.listen(port, () => {
     console.log(`NoiseGenerator app is listening on port ${port}.`)
