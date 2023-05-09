@@ -11,7 +11,7 @@ app.get('/', (req, res, next) => {
         cors = false
     } = req.query
 
-    generateImage(Math.max(0, Math.min(width, 1024)), Math.max(Math.min(height, 2048)), 80, (e, img) => {
+    generateImage(Math.max(0, Math.min(width, 2048)), Math.max(Math.min(height, 2048)), 80, (e, img) => {
         if (e) {
             next(e);
         } else {
