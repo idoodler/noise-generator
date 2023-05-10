@@ -4,7 +4,7 @@ import { generateImage } from 'js-image-generator';
 const port = process.env.PORT ?? 8080,
     app = express()
 
-app.get('/', (req, res, next) => {
+app.get(/\/?/, (req, res, next) => {
     const {
         height = 120,
         width = 120,
