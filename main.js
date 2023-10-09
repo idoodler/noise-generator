@@ -15,7 +15,7 @@ app.get(/\/?/, (req, res, next) => {
         if (e) {
             next(e);
         } else {
-            res.set('Content-Type', 'image/png')
+            res.set('Content-Type', 'image/jpg')
             cors && res.set('Access-Control-Allow-Origin', '*')
             res.send(img.data)
         }
