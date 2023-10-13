@@ -10,6 +10,7 @@ Generates a random image with a specified `height` and `width`.
 | cors         | true\|false      | false    |
 | type         | jpg\|mjpg        | jpg      |
 | mjpgInterval | Number(100...)   | 100 (ms) |
+| mjpgOffset   | true\|false      | false    |
 
 ## Docker
 `docker pull ghcr.io/idoodler/noise-generator:latest`

@@ -2,16 +2,23 @@ import express from 'express'
 import { generateImage } from 'js-image-generator';
 
 const port = process.env.PORT ?? 8080,
-    app = express()
+    app = express(),
+    contentType = 'image/jpg'
 
 let reqCnt = 0;
 
+/**
+ * Generates a random jpg image
+ * @param height
+ * @param width
+ * @returns {Promise<Buffer>}
+ */
 const getImageData = async ({
     height = 120,
     width = 120,
                         }) => {
     return new Promise((resolve, reject) => {
-        generateImage(Math.max(0, Math.min(width, 2048)), Math.max(Math.min(height, 2048)), 10, (e, img) => {
+        generateImage(Math.max(0, Math.min(width, 2048)), Math.max(Math.min(height, 2048)), 100, (e, img) => {
             if (e) {
                 reject(e)
             } else {
@@ -22,16 +29,21 @@ const getImageData = async ({
 }
 
 const sendMJPG = (req, res, next) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         let imgGeneratorInterval;
-        const stop = () => {
+        const stop = (error) => {
             imgGeneratorInterval && clearInterval(imgGeneratorInterval)
-            resolve()
+            if (error instanceof Error) {
+                reject(error)
+            } else {
+                resolve()
+            }
         }
         const {
             mjpgInterval = 100,
+            mjpgOffset = false
         } = req.query
-        const boundary = '--myBoundary'
+        const boundary = '--noiseGeneratorBoundary'
 
         res.writeHead(200, {
             'Cache-Control': 'no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0',
@@ -40,19 +52,33 @@ const sendMJPG = (req, res, next) => {
             'Content-Type': `multipart/x-mixed-replace; boundary=${boundary}`
         })
 
+        let sendBuffer;
+        if (mjpgOffset) {
+            try {
+                const offsetImgData = await getImageData(req.query);
+                // Fill the send buffer with half of a previous picture
+                sendBuffer = offsetImgData.subarray(offsetImgData.length/2)
+            } catch (e) {
+                stop(e);
+                return
+            }
+        } else {
+            sendBuffer = new Buffer(0);
+        }
         imgGeneratorInterval = setInterval(async () => {
             try {
                 const imgData = await getImageData(req.query)
+                sendBuffer = Buffer.concat([sendBuffer, imgData])
+                let dataToSend = sendBuffer.subarray(0, imgData.length)
                 next()
-                res.write(`${boundary}\nContent-Type: image/jpg\nContent-length: ${imgData.length}\n\n`)
-                res.write(imgData);
+                res.write(`${boundary}\nContent-Type: ${contentType}\nContent-length: ${dataToSend.length}\n\n`)
+                res.write(dataToSend)
+                sendBuffer = sendBuffer.subarray(dataToSend.length)
             } catch (e) {
-                reject(e)
+                stop(e)
             }
         }, Math.max(mjpgInterval, 100))
-        res.socket.once('close', () => {
-            stop()
-        })
+        res.socket.once('close', stop)
     });
 }
 
@@ -67,15 +93,14 @@ app.get(/\/?/, async (req, res, next) => {
 
     try {
         switch (type) {
-            case 'jpg':
-                const imgData = await getImageData(req.query);
-                res.set('Content-Type', 'image/jpg')
-                res.send(imgData)
-                break
             case 'mjpg':
                 await sendMJPG(req, res, next)
                 console.info(`Stopped request of type '${type}' with ID '${cntRef}'`)
                 break;
+            default:
+                const imgData = await getImageData(req.query);
+                res.set('Content-Type', contentType)
+                res.send(imgData)
         }
     } catch (e) {
         next(e);
