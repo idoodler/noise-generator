@@ -1,5 +1,6 @@
 import express from 'express'
 import { generateImage } from 'js-image-generator';
+import fs from 'fs'
 
 const port = process.env.PORT ?? 8080,
     app = express(),
@@ -82,6 +83,12 @@ const sendMJPG = (req, res, next) => {
     });
 }
 
+app.get('/health', (req, res) => res.end('ok'));
+
+app.get('/docs', async(req, res) => {
+    res.end(await fs.promises.readFile('./Readme.md'))
+})
+
 app.get(/\/?/, async (req, res, next) => {
     const cntRef = reqCnt++
     const {
@@ -107,8 +114,6 @@ app.get(/\/?/, async (req, res, next) => {
         console.warn(`Request of type '${type}' with ID '${cntRef}' failed`)
     }
 })
-
-app.get('/health', (req, res, next) => res.end('ok'));
 
 app.listen(port, () => {
     console.log(`NoiseGenerator app is listening on port ${port}.`)
