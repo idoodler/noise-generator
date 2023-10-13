@@ -11,7 +11,7 @@ const getImageData = async ({
     width = 120,
                         }) => {
     return new Promise((resolve, reject) => {
-        generateImage(Math.max(0, Math.min(width, 2048)), Math.max(Math.min(height, 2048)), 80, (e, img) => {
+        generateImage(Math.max(0, Math.min(width, 2048)), Math.max(Math.min(height, 2048)), 10, (e, img) => {
             if (e) {
                 reject(e)
             } else {
