@@ -1,29 +1,54 @@
 import express from 'express'
-import { generateImage } from 'js-image-generator';
+import { generateImage } from 'js-image-generator'
 import fs from 'fs'
+import Jimp from 'jimp'
+import boolParser from 'express-query-boolean'
 
 const port = process.env.PORT ?? 8080,
     app = express(),
-    contentType = 'image/jpg'
+    contentType = 'image/jpeg',
+    boundary = '--noiseGeneratorBoundary',
+    infoBlack = await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK),
+    infoWhite = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE),
+    timeBlack = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK),
+    timeWhite = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE)
 
-let reqCnt = 0;
+
+let reqCnt = 0
+
+const getConfigValue = value => {
+    switch (typeof value) {
+        case 'boolean':
+            return value ? 'Y' : 'N'
+        default:
+            return value
+    }
+}
 
 /**
  * Generates a random jpg image
- * @param height
- * @param width
+ * @param config Contains width and heights of the image, min = 120, max = 2048
  * @returns {Promise<Buffer>}
  */
-const getImageData = async ({
-    height = 120,
-    width = 120,
-                        }) => {
+const getImageData = async (config) => {
+    const width = Math.max(120, Math.min(config.width ?? 120, 2048)),
+        height = Math.max(120, Math.min(config.height ?? 120, 2048))
     return new Promise((resolve, reject) => {
-        generateImage(Math.max(0, Math.min(width, 2048)), Math.max(Math.min(height, 2048)), 100, (e, img) => {
+        generateImage(width, height,100, async (e, img) => {
             if (e) {
                 reject(e)
             } else {
-                resolve(img.data)
+                const jimpImg = await Jimp.read(img.data)
+                const currentTime = new Date().toLocaleTimeString()
+                Object.keys(config).forEach((key, idx) => {
+                    const y = idx * 16
+                    jimpImg.print(infoBlack, 0, y -1, `${key}: ${getConfigValue(config[key])}`)
+                    jimpImg.print(infoWhite, 1, y, `${key}: ${getConfigValue(config[key])}`)
+                })
+                // Rendering two, offset fonts results in a nice readable text
+                jimpImg.print(timeBlack, 0, ((width - 32)/2) -1, currentTime)
+                jimpImg.print(timeWhite, 1, (width - 32)/2, currentTime)
+                resolve(await jimpImg.getBufferAsync(contentType))
             }
         })
     })
@@ -31,7 +56,7 @@ const getImageData = async ({
 
 const sendMJPG = (req, res, next) => {
     return new Promise(async (resolve, reject) => {
-        let imgGeneratorInterval;
+        let imgGeneratorInterval
         const stop = (error) => {
             imgGeneratorInterval && clearInterval(imgGeneratorInterval)
             if (error instanceof Error) {
@@ -42,9 +67,9 @@ const sendMJPG = (req, res, next) => {
         }
         const {
             mjpgInterval = 100,
-            mjpgOffset = false
+            mjpgOffset = false,
+            mjpgHeader = false
         } = req.query
-        const boundary = '--noiseGeneratorBoundary'
 
         res.writeHead(200, {
             'Cache-Control': 'no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0',
@@ -53,18 +78,18 @@ const sendMJPG = (req, res, next) => {
             'Content-Type': `multipart/x-mixed-replace; boundary=${boundary}`
         })
 
-        let sendBuffer;
+        let sendBuffer
         if (mjpgOffset) {
             try {
-                const offsetImgData = await getImageData(req.query);
+                const offsetImgData = await getImageData(req.query)
                 // Fill the send buffer with half of a previous picture
                 sendBuffer = offsetImgData.subarray(offsetImgData.length/2)
             } catch (e) {
-                stop(e);
+                stop(e)
                 return
             }
         } else {
-            sendBuffer = new Buffer(0);
+            sendBuffer = new Buffer(0)
         }
         imgGeneratorInterval = setInterval(async () => {
             try {
@@ -72,7 +97,11 @@ const sendMJPG = (req, res, next) => {
                 sendBuffer = Buffer.concat([sendBuffer, imgData])
                 let dataToSend = sendBuffer.subarray(0, imgData.length)
                 next()
-                res.write(`${boundary}\nContent-Type: ${contentType}\nContent-length: ${dataToSend.length}\n\n`)
+                if (mjpgHeader) {
+                    res.write(`${boundary}\nContent-Type: ${contentType}\nContent-length: ${dataToSend.length}\n\n`)
+                } else {
+                    res.write(`${boundary}\n\n`)
+                }
                 res.write(dataToSend)
                 sendBuffer = sendBuffer.subarray(dataToSend.length)
             } catch (e) {
@@ -80,10 +109,12 @@ const sendMJPG = (req, res, next) => {
             }
         }, Math.max(mjpgInterval, 100))
         res.socket.once('close', stop)
-    });
+    })
 }
 
-app.get('/health', (req, res) => res.end('ok'));
+app.use(boolParser());
+
+app.get('/health', (req, res) => res.end('ok'))
 
 app.get('/docs', async(req, res) => {
     res.end(await fs.promises.readFile('./Readme.md'))
@@ -103,14 +134,14 @@ app.get(/\/?/, async (req, res, next) => {
             case 'mjpg':
                 await sendMJPG(req, res, next)
                 console.info(`Stopped request of type '${type}' with ID '${cntRef}'`)
-                break;
+                break
             default:
-                const imgData = await getImageData(req.query);
+                const imgData = await getImageData(req.query)
                 res.set('Content-Type', contentType)
                 res.send(imgData)
         }
     } catch (e) {
-        next(e);
+        next(e)
         console.warn(`Request of type '${type}' with ID '${cntRef}' failed`)
     }
 })
