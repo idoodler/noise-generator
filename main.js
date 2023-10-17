@@ -68,6 +68,7 @@ const sendMJPG = (req, res, next) => {
         const {
             mjpgInterval = 100,
             mjpgOffset = false,
+            mjpgMod,
             mjpgHeader = false
         } = req.query
 
@@ -79,7 +80,7 @@ const sendMJPG = (req, res, next) => {
         })
 
         let sendBuffer
-        if (mjpgOffset) {
+        if (mjpgMod.includes('offset')) {
             try {
                 const offsetImgData = await getImageData(req.query)
                 // Fill the send buffer with half of a previous picture
@@ -89,13 +90,16 @@ const sendMJPG = (req, res, next) => {
                 return
             }
         } else {
-            sendBuffer = new Buffer(0)
+            sendBuffer = Buffer.alloc(0)
         }
         imgGeneratorInterval = setInterval(async () => {
             try {
                 const imgData = await getImageData(req.query)
                 sendBuffer = Buffer.concat([sendBuffer, imgData])
                 let dataToSend = sendBuffer.subarray(0, imgData.length)
+                if (mjpgMod.includes('padd')) {
+                    dataToSend = Buffer.concat([dataToSend, Buffer.alloc(512)])
+                }
                 next()
                 if (mjpgHeader) {
                     res.write(`${boundary}\nContent-Type: ${contentType}\nContent-length: ${dataToSend.length}\n\n`)
