@@ -65,12 +65,13 @@ const sendMJPG = (req, res, next) => {
                 resolve()
             }
         }
-        const {
+        let {
             mjpgInterval = 100,
-            mjpgOffset = false,
-            mjpgMod,
+            mjpgMod = '',
             mjpgHeader = false
         } = req.query
+
+        mjpgMod = mjpgMod.split(',');
 
         res.writeHead(200, {
             'Cache-Control': 'no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0',
