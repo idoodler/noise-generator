@@ -68,10 +68,11 @@ const sendMJPG = (req, res, next) => {
         let {
             mjpgInterval = 100,
             mjpgMod = '',
-            mjpgHeader = false
+            mjpgHeaderMod = ''
         } = req.query
 
         mjpgMod = mjpgMod.split(',');
+        mjpgHeaderMod = mjpgHeaderMod.split(',')
 
         res.writeHead(200, {
             'Cache-Control': 'no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0',
@@ -91,7 +92,7 @@ const sendMJPG = (req, res, next) => {
                 return
             }
         } else {
-            sendBuffer = Buffer.alloc(0)
+            sendBuffer = new Buffer(0)
         }
         imgGeneratorInterval = setInterval(async () => {
             try {
@@ -102,11 +103,16 @@ const sendMJPG = (req, res, next) => {
                     dataToSend = Buffer.concat([dataToSend, Buffer.alloc(512)])
                 }
                 next()
-                if (mjpgHeader) {
-                    res.write(`${boundary}\nContent-Type: ${contentType}\nContent-length: ${dataToSend.length}\n\n`)
-                } else {
-                    res.write(`${boundary}\n\n`)
+                const payloadHeader = [
+                    boundary,
+                    `Content-Type: ${contentType}`
+                ]
+                if (mjpgHeaderMod.includes('noLength')) {
+                    payloadHeader.push(`Content-length: ${dataToSend.length}`)
+                } else if (mjpgHeaderMod.includes('zeroLength')) {
+                    payloadHeader.push(`Content-length: 0`)
                 }
+                res.write(`${payloadHeader.join('\n')}\n\n`)
                 res.write(dataToSend)
                 sendBuffer = sendBuffer.subarray(dataToSend.length)
             } catch (e) {
@@ -127,6 +133,7 @@ app.get('/docs', async(req, res) => {
 
 app.get(/\/?/, async (req, res, next) => {
     const cntRef = reqCnt++
+    req.query.cnt = cntRef
     const {
         type = 'jpg',
         cors = false
