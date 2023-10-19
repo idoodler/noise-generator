@@ -144,6 +144,7 @@ app.get(/\/?/, async (req, res, next) => {
     try {
         switch (type) {
             case 'mjpg':
+            case '.mjpg':
                 await sendMJPG(req, res, next)
                 console.info(`Stopped request of type '${type}' with ID '${cntRef}'`)
                 break

@@ -8,7 +8,7 @@ Generates a random image with a specified `height` and `width` which includes th
 | height        | Number(120...2048)    | 120      |
 | width         | Number(120...2048)    | 120      |
 | cors          | true\|false           | false    |
-| type          | jpg\|mjpg             | jpg      |
+| type          | jpg\|mjpg\|.mjpg      | jpg      |
 | mjpgInterval  | Number(100...)        | 100 (ms) |
 | mjpgMod       | offset\| padd         |          |
 | mjpgHeaderMod | noLength \|zeroLength |          |
@@ -30,6 +30,7 @@ Mods which can be applied to the MJPEG payload header **NOT** the HTTP response 
 - `zeroLength`
   - Will add a `Content-Length` of `0` regardless of the actual length transmitted
 mjpgMod
+
 ## Docker
 `docker pull ghcr.io/idoodler/noise-generator:latest`
 
