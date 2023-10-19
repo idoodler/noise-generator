@@ -3,15 +3,15 @@
 Generates a random image with a specified `height` and `width` which includes the current time in the center.
 
 ## Query Parameters
-| Param         | Accepted              | Default  |
-|---------------|-----------------------|----------|
-| height        | Number(120...2048)    | 120      |
-| width         | Number(120...2048)    | 120      |
-| cors          | true\|false           | false    |
-| type          | jpg\|mjpg\|.mjpg      | jpg      |
-| mjpgInterval  | Number(100...)        | 100 (ms) |
-| mjpgMod       | offset\| padd         |          |
-| mjpgHeaderMod | noLength \|zeroLength |          |
+| Param         | Accepted                   | Default    |
+|---------------|----------------------------|------------|
+| height        | `Number(120...2048)`       | `120`      |
+| width         | `Number(120...2048)`       | `120`      |
+| cors          | `true` \| `false`          | `false`    |
+| type          | `jpg` \| `mjpg` \| .`mjpg` | `jpg`      |
+| mjpgInterval  | `Number(100...)`           | `100` (ms) |
+| mjpgMod       | `offset` \| `padd`         |            |
+| mjpgHeaderMod | `noLength` \| `zeroLength` |            |
 
 ### mjpgInterval
 The interval in milliseconds in which the MJPEG stream sends a new frame
