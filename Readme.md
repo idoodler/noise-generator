@@ -1,3 +1,5 @@
+![Example](noiseGenerator.jpeg)
+
 # noise-generator
 
 Generates a random image with a specified `height` and `width` which includes the current time in the center.
