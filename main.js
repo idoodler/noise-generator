@@ -157,10 +157,16 @@ const basicAuthMiddleware = (req, res, next) => {
     }
 };
 
-// Add this middleware to your app
-app.use(basicAuthMiddleware);
+const corsMiddleware = (req, res, next) => {
+    if (req.query.cors) {
+        res.set('Access-Control-Allow-Origin', '*')
+    }
+    next()
+}
 
 app.use(boolParser());
+app.use(corsMiddleware);
+app.use(basicAuthMiddleware);
 
 app.get('/health', (req, res) => res.end('ok'))
 
@@ -173,9 +179,7 @@ app.get(/\/?/, async (req, res, next) => {
     req.query.cnt = cntRef
     const {
         type = 'jpg',
-        cors = false
     } = req.query
-    cors && res.set('Access-Control-Allow-Origin', '*')
     console.info(`Starting request of type '${type}' with ID '${cntRef}'`)
 
     try {
