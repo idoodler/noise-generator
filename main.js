@@ -123,6 +123,43 @@ const sendMJPG = (req, res, next) => {
     })
 }
 
+// Basic Authentication middleware
+const basicAuthMiddleware = (req, res, next) => {
+    // Check if auth=basic query param is set
+    if (req.query.auth === 'basic') {
+        // Basic Auth implementation
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith('Basic ')) {
+            // No authentication provided, prompt for credentials
+            res.setHeader('WWW-Authenticate', 'Basic realm="Noise Generator"');
+            return res.status(401).send('Authentication required');
+        }
+
+        // Decode and verify credentials
+        // Format is: "Basic base64(username:password)"
+        const base64Credentials = authHeader.split(' ')[1];
+        const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
+        const [username, password] = credentials.split(':');
+
+        // Replace with your own validation logic
+        if (username === 'user' && password === 'password') {
+            // Authentication successful
+            next();
+        } else {
+            // Authentication failed
+            res.setHeader('WWW-Authenticate', 'Basic realm="Noise Generator"');
+            return res.status(401).send('Invalid credentials');
+        }
+    } else {
+        // Auth not required, proceed
+        next();
+    }
+};
+
+// Add this middleware to your app
+app.use(basicAuthMiddleware);
+
 app.use(boolParser());
 
 app.get('/health', (req, res) => res.end('ok'))

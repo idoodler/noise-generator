@@ -14,6 +14,7 @@ Generates a random image with a specified `height` and `width` which includes th
 | mjpgInterval    | `Number(100...)`           | `100` (ms) |
 | [mjpgMod]       | `offset` \| `padd`         |            |
 | [mjpgHeaderMod] | `noLength` \| `zeroLength` |            |
+| [auth]          | `basic`                    |            |
 
 ### mjpgInterval
 The interval in milliseconds in which the MJPEG stream sends a new frame
@@ -32,6 +33,9 @@ Mods which can be applied to the MJPEG payload header **NOT** the HTTP response 
 - `zeroLength`
   - Will add a `Content-Length` of `0` regardless of the actual length transmitted
 mjpgMod
+
+### auth - Optional
+Will trigger the desired authentication method (`basic` for now) will only expect the following credentials: `user:password`
 
 ## Docker
 `docker pull ghcr.io/idoodler/noise-generator:latest`
