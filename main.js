@@ -175,7 +175,10 @@ const conditionalAuth = (req, res, next) => {
 
 const corsMiddleware = (req, res, next) => {
     if (req.query.cors) {
-        res.set('Access-Control-Allow-Origin', '*')
+        res.setHeader('Access-Control-Allow-Origin', '*')
+    }
+    if (req.query.exposeAuthHeader) {
+        res.setHeader('Access-Control-Expose-Headers', 'WWW-Authenticate');
     }
     next()
 }
