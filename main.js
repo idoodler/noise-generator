@@ -3,6 +3,9 @@ import { generateImage } from 'js-image-generator'
 import fs from 'fs'
 import Jimp from 'jimp'
 import boolParser from 'express-query-boolean'
+import passport from 'passport'
+import { BasicStrategy, DigestStrategy } from 'passport-http'
+
 
 const port = process.env.PORT ?? 8080,
     app = express(),
@@ -11,10 +14,44 @@ const port = process.env.PORT ?? 8080,
     infoBlack = await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK),
     infoWhite = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE),
     timeBlack = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK),
-    timeWhite = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE)
+    timeWhite = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
 
 
 let reqCnt = 0
+
+const Credentials = {
+    username: 'user',
+    password: 'password'
+}
+
+// Configure Basic Authentication strategy
+passport.use('basic', new BasicStrategy(
+    (username, password, done) => {
+        if (username === Credentials.username && password === Credentials.password) {
+            return done(null, username);
+        } else {
+            return done(null, false);
+        }
+    }
+));
+
+// Configure Digest Authentication strategy
+passport.use('digest', new DigestStrategy(
+    { qop: 'auth' },
+    (username, done) => {
+        // Check if username exists and return the password for validation
+        if (username === Credentials.username) {
+            return done(null, username, Credentials.password);
+        } else {
+            return done(null, false);
+        }
+    },
+    (params, done) => {
+        // Additional validation if needed
+        done(null, true);
+    }
+));
+
 
 const getConfigValue = value => {
     switch (typeof value) {
@@ -54,7 +91,7 @@ const getImageData = async (config) => {
     })
 }
 
-const sendMJPG = (req, res, next) => {
+const sendMJPG = (req, res) => {
     return new Promise(async (resolve, reject) => {
         let imgGeneratorInterval
         const stop = (error) => {
@@ -102,7 +139,6 @@ const sendMJPG = (req, res, next) => {
                 if (mjpgMod.includes('padd')) {
                     dataToSend = Buffer.concat([dataToSend, Buffer.alloc(512)])
                 }
-                next()
                 const payloadHeader = [
                     boundary,
                     `Content-Type: ${contentType}`
@@ -123,34 +159,14 @@ const sendMJPG = (req, res, next) => {
     })
 }
 
-// Basic Authentication middleware
-const basicAuthMiddleware = (req, res, next) => {
-    // Check if auth=basic query param is set
-    if (req.query.auth === 'basic') {
-        // Basic Auth implementation
-        const authHeader = req.headers.authorization;
+// Middleware to conditionally apply authentication based on query param
+const conditionalAuth = (req, res, next) => {
+    const authType = req.query.auth;
 
-        if (!authHeader || !authHeader.startsWith('Basic ')) {
-            // No authentication provided, prompt for credentials
-            res.setHeader('WWW-Authenticate', 'Basic realm="Noise Generator"');
-            return res.status(401).send('Authentication required');
-        }
-
-        // Decode and verify credentials
-        // Format is: "Basic base64(username:password)"
-        const base64Credentials = authHeader.split(' ')[1];
-        const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
-        const [username, password] = credentials.split(':');
-
-        // Replace with your own validation logic
-        if (username === 'user' && password === 'password') {
-            // Authentication successful
-            next();
-        } else {
-            // Authentication failed
-            res.setHeader('WWW-Authenticate', 'Basic realm="Noise Generator"');
-            return res.status(401).send('Invalid credentials');
-        }
+    if (authType === 'basic') {
+        passport.authenticate('basic', { session: false })(req, res, next);
+    } else if (authType === 'digest') {
+        passport.authenticate('digest', { session: false })(req, res, next);
     } else {
         // Auth not required, proceed
         next();
@@ -166,7 +182,7 @@ const corsMiddleware = (req, res, next) => {
 
 app.use(boolParser());
 app.use(corsMiddleware);
-app.use(basicAuthMiddleware);
+app.use(conditionalAuth);
 
 app.get('/health', (req, res) => res.end('ok'))
 
@@ -174,7 +190,22 @@ app.get('/docs', async(req, res) => {
     res.end(await fs.promises.readFile('./Readme.md'))
 })
 
-app.get(/\/?/, async (req, res, next) => {
+app.get('/stream.cgi', async (req, res) => {
+    const cntRef = reqCnt++
+    req.query.cnt = cntRef
+    req.query.isCGI = true;
+    req.query.type = 'mjpg'
+    console.info('Starting fake CGI video request');
+
+    try {
+        await sendMJPG(req, res)
+        console.info(`Stopped fake CGI request of type 'mjpg' with ID '${cntRef}'`)
+    } catch (e) {
+        res.end(e.message)
+    }
+})
+
+app.get(/\/?/, async (req, res) => {
     const cntRef = reqCnt++
     req.query.cnt = cntRef
     const {
@@ -186,7 +217,7 @@ app.get(/\/?/, async (req, res, next) => {
         switch (type) {
             case 'mjpg':
             case '.mjpg':
-                await sendMJPG(req, res, next)
+                await sendMJPG(req, res)
                 console.info(`Stopped request of type '${type}' with ID '${cntRef}'`)
                 break
             default:
@@ -195,8 +226,7 @@ app.get(/\/?/, async (req, res, next) => {
                 res.send(imgData)
         }
     } catch (e) {
-        next(e)
-        console.warn(`Request of type '${type}' with ID '${cntRef}' failed`)
+        res.end(e.message)
     }
 })
 
