@@ -188,13 +188,13 @@ app.use(boolParser());
 app.use(corsMiddleware);
 app.use(conditionalAuth);
 
-app.get('/health', (req, res) => res.end('ok'))
+app.get(/\/health$/, (req, res) => res.end('ok'))
 
-app.get('/docs', async(req, res) => {
+app.get(/\/docs$/, async(req, res) => {
     res.end(await fs.promises.readFile('./Readme.md'))
 })
 
-app.get('/stream.cgi', async (req, res) => {
+app.get(/\/stream.cgi$/, async (req, res) => {
     const cntRef = reqCnt++
     req.query.cnt = cntRef
     req.query.isCGI = true;
