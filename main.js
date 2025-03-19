@@ -47,7 +47,6 @@ passport.use('digest', new DigestStrategy(
         }
     },
     (params, done) => {
-        console.log('Digest Params', params);
         // Additional validation if needed
         done(null, true);
     }
