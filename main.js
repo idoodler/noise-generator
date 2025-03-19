@@ -7,7 +7,7 @@ import passport from 'passport'
 import { BasicStrategy, DigestStrategy } from 'passport-http'
 
 
-const port = process.env.PORT ?? 8080,
+const port = process.env.PORT ?? 9999,
     app = express(),
     contentType = 'image/jpeg',
     boundary = '--noiseGeneratorBoundary',
@@ -47,6 +47,7 @@ passport.use('digest', new DigestStrategy(
         }
     },
     (params, done) => {
+        console.log('Digest Params', params);
         // Additional validation if needed
         done(null, true);
     }
