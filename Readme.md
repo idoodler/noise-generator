@@ -7,8 +7,8 @@ Generates a random image with a specified `height` and `width` which includes th
 ## Query Parameters
 | Param              | Accepted                   | Default    |
 |--------------------|----------------------------|------------|
-| height             | `Number(120...2048)`       | `120`      |
-| width              | `Number(120...2048)`       | `120`      |
+| height             | `Number(50...2048)`        | `50`      |
+| width              | `Number(50...2048)`        | `50`      |
 | cors               | `true` \| `false`          | `false`    |
 | type               | `jpg` \| `mjpg` \| `.mjpg` | `jpg`      |
 | mjpgInterval       | `Number(100...)`           | `100` (ms) |

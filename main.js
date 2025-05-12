@@ -64,12 +64,12 @@ const getConfigValue = value => {
 
 /**
  * Generates a random jpg image
- * @param config Contains width and heights of the image, min = 120, max = 2048
+ * @param config Contains width and heights of the image, min = 50, max = 2048
  * @returns {Promise<Buffer>}
  */
 const getImageData = async (config) => {
-    const width = Math.max(120, Math.min(config.width ?? 120, 2048)),
-        height = Math.max(120, Math.min(config.height ?? 120, 2048))
+    const width = Math.max(50, Math.min(config.width ?? 50, 2048)),
+        height = Math.max(50, Math.min(config.height ?? 50, 2048))
     return new Promise((resolve, reject) => {
         generateImage(width, height,100, async (e, img) => {
             if (e) {
